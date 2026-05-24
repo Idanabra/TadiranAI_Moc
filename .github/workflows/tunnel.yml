@@ -6,6 +6,9 @@ on:
     branches: [claude/upbeat-bardeen-oWH6s]
     paths: ['.github/workflows/tunnel.yml']
 
+permissions:
+  contents: write
+
 jobs:
   serve:
     runs-on: ubuntu-latest
@@ -47,7 +50,9 @@ jobs:
           done
           curl -s http://localhost:8000/api/health
 
-      - name: Start Cloudflare tunnel and publish URL
+      - name: Start tunnel and publish URL
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           curl -sL https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64 \
             -o cloudflared && chmod +x cloudflared
@@ -71,14 +76,17 @@ jobs:
           echo "============================================"
           echo "  PUBLIC URL: $URL"
           echo "============================================"
-          echo ""
+
+          # Write URL to a file in the repo so it can be read without auth
+          git config user.email "actions@github.com"
+          git config user.name "GitHub Actions"
+          echo "$URL" > PUBLIC_URL.txt
+          git add PUBLIC_URL.txt
+          git commit -m "chore: publish tunnel URL [skip ci]"
+          git push
 
           echo "## 🌐 AC Warranty Scoring — Live!" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
           echo "### **[$URL]($URL)**" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "App will stay live until this workflow times out (up to 6 hours)." >> $GITHUB_STEP_SUMMARY
-
           echo "::notice title=Public URL::$URL"
 
           # Keep alive
