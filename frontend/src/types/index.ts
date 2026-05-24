@@ -89,41 +89,22 @@ export const TIER_LABELS = [
   'Not Recommended',
 ]
 
-export const TIER_CONFIG: Record<string, { bg: string; text: string; border: string; dot: string }> = {
-  dark_green: {
-    bg: 'bg-green-900',
-    text: 'text-green-100',
-    border: 'border-green-700',
-    dot: 'bg-green-400',
-  },
-  light_green: {
-    bg: 'bg-green-700',
-    text: 'text-green-50',
-    border: 'border-green-500',
-    dot: 'bg-green-300',
-  },
-  yellow: {
-    bg: 'bg-yellow-600',
-    text: 'text-yellow-50',
-    border: 'border-yellow-400',
-    dot: 'bg-yellow-300',
-  },
-  orange: {
-    bg: 'bg-orange-600',
-    text: 'text-orange-50',
-    border: 'border-orange-400',
-    dot: 'bg-orange-300',
-  },
-  red: {
-    bg: 'bg-red-700',
-    text: 'text-red-50',
-    border: 'border-red-500',
-    dot: 'bg-red-400',
-  },
-  gray: {
-    bg: 'bg-gray-500',
-    text: 'text-gray-50',
-    border: 'border-gray-400',
-    dot: 'bg-gray-300',
-  },
+export const TIER_LABELS_HE: Record<string, string> = {
+  'Very High Profitability': 'רווחיות גבוהה מאוד',
+  'High Profitability': 'רווחיות גבוהה',
+  'Medium Profitability': 'רווחיות בינונית',
+  'Low Profitability': 'רווחיות נמוכה',
+  'Not Recommended': 'לא מומלץ',
+  'Blocked': 'חסום',
+  'No Pricing': 'אין תמחור',
+  'Ineligible': 'לא כשיר',
+  'N/A': 'לא רלוונטי',
+}
+
+export function industryLabel(industry: string): string {
+  return industry.toLowerCase() === 'private' || industry === 'פרטי' ? 'פרטי' : 'עסקי'
+}
+
+export function isPrivate(industry: string): boolean {
+  return industry.toLowerCase() === 'private' || industry === 'פרטי'
 }

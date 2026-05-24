@@ -27,7 +27,6 @@ export default function App() {
   const [selectedCustomer, setSelectedCustomer] = useState<CustomerScore | null>(null)
   const [isSimMode, setIsSimMode] = useState(false)
 
-  // Default data (no simulation)
   const { data: defaultStats, isLoading: statsLoading } = useQuery({
     queryKey: ['stats'],
     queryFn: fetchStats,
@@ -45,7 +44,6 @@ export default function App() {
     enabled: !isSimMode,
   })
 
-  // Simulation mutations
   const simCustomersMutation = useMutation({
     mutationFn: (params: SimulationParams) =>
       simulateScores(params, {
@@ -72,45 +70,45 @@ export default function App() {
     setIsSimMode(false)
   }, [])
 
+  void simParams
+
   const stats = isSimMode ? (simStatsMutation.data ?? defaultStats) : defaultStats
-  const customers = isSimMode
-    ? (simCustomersMutation.data ?? [])
-    : (defaultCustomers ?? [])
+  const customers = isSimMode ? (simCustomersMutation.data ?? []) : (defaultCustomers ?? [])
   const isLoading = isSimMode
-    ? (simCustomersMutation.isPending || simStatsMutation.isPending)
-    : (statsLoading || customersLoading)
+    ? simCustomersMutation.isPending || simStatsMutation.isPending
+    : statsLoading || customersLoading
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100">
+    <div className="min-h-screen bg-gray-50 text-gray-900">
       {/* Header */}
-      <header className="border-b border-slate-800 bg-slate-900/80 backdrop-blur sticky top-0 z-40">
+      <header className="border-b border-gray-200 bg-white/90 backdrop-blur sticky top-0 z-40 shadow-sm">
         <div className="max-w-screen-2xl mx-auto px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="p-2 bg-blue-600 rounded-xl">
               <Wind className="w-6 h-6 text-white" />
             </div>
             <div>
-              <h1 className="text-xl font-bold text-white">AC Warranty Scoring</h1>
-              <p className="text-xs text-slate-400">Insurance Policy Profitability Engine</p>
+              <h1 className="text-xl font-bold text-gray-900">ניקוד ביטוח אחריות מזגנים</h1>
+              <p className="text-xs text-gray-500">מנוע רווחיות פוליסות ביטוח</p>
             </div>
           </div>
           <div className="flex items-center gap-4">
             {isSimMode && (
-              <div className="flex items-center gap-2 bg-blue-900/40 border border-blue-700 rounded-lg px-3 py-1.5">
-                <span className="w-2 h-2 rounded-full bg-blue-400 animate-pulse" />
-                <span className="text-xs text-blue-300 font-medium">Simulation Active</span>
+              <div className="flex items-center gap-2 bg-blue-50 border border-blue-200 rounded-lg px-3 py-1.5">
+                <span className="w-2 h-2 rounded-full bg-blue-500 animate-pulse" />
+                <span className="text-xs text-blue-700 font-medium">סימולציה פעילה</span>
                 <button
                   onClick={handleResetSimulation}
-                  className="text-xs text-blue-400 hover:text-white ml-2 underline"
+                  className="text-xs text-blue-600 hover:text-blue-900 mr-2 underline"
                 >
-                  Reset
+                  איפוס
                 </button>
               </div>
             )}
             {stats && (
-              <div className="text-xs text-slate-400 hidden md:block">
-                <span className="text-white font-medium">{stats.total_customers.toLocaleString()}</span> customers ·{' '}
-                <span className="text-white font-medium">{stats.total_products.toLocaleString()}</span> products
+              <div className="text-xs text-gray-500 hidden md:block" dir="ltr">
+                <span className="text-gray-900 font-medium">{stats.total_customers.toLocaleString()}</span> לקוחות ·{' '}
+                <span className="text-gray-900 font-medium">{stats.total_products.toLocaleString()}</span> מוצרים
               </div>
             )}
           </div>
@@ -118,21 +116,18 @@ export default function App() {
       </header>
 
       <main className="max-w-screen-2xl mx-auto px-6 py-6 space-y-6">
-        {/* KPI Cards */}
         {stats ? (
           <KPICards stats={stats} />
         ) : (
           <div className="grid grid-cols-6 gap-4">
             {Array.from({ length: 6 }).map((_, i) => (
-              <div key={i} className="h-20 rounded-xl bg-slate-800/40 animate-pulse" />
+              <div key={i} className="h-20 rounded-xl bg-gray-200 animate-pulse" />
             ))}
           </div>
         )}
 
-        {/* Charts */}
         {stats && <TierChart stats={stats} />}
 
-        {/* Simulation Panel */}
         <SimulationPanel
           params={pendingParams}
           onChange={setPendingParams}
@@ -140,21 +135,18 @@ export default function App() {
           isRunning={simCustomersMutation.isPending}
         />
 
-        {/* Filter Panel */}
         <FilterPanel filters={filters} onChange={setFilters} />
 
-        {/* Results count */}
         <div className="flex items-center justify-between">
-          <p className="text-sm text-slate-400">
-            Showing{' '}
-            <span className="text-white font-medium">{customers.length}</span> customers
+          <p className="text-sm text-gray-500">
+            מציג{' '}
+            <span className="text-gray-900 font-medium">{customers.length}</span> לקוחות
             {isSimMode && (
-              <span className="ml-2 text-blue-400 text-xs">(simulation results)</span>
+              <span className="mr-2 text-blue-600 text-xs">(תוצאות סימולציה)</span>
             )}
           </p>
         </div>
 
-        {/* Customer Grid */}
         <CustomerGrid
           customers={customers}
           onSelect={setSelectedCustomer}
@@ -162,13 +154,12 @@ export default function App() {
         />
 
         {customers.length >= 200 && (
-          <p className="text-center text-xs text-slate-500 pb-4">
-            Showing first 200 results — use filters to narrow down
+          <p className="text-center text-xs text-gray-400 pb-4">
+            מציג 200 תוצאות ראשונות — השתמש בפילטרים לצמצום
           </p>
         )}
       </main>
 
-      {/* Detail Modal */}
       {selectedCustomer && (
         <CustomerDetailModal
           customer={selectedCustomer}
