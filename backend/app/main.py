@@ -1,12 +1,17 @@
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, Query
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
 from typing import Optional
+from pathlib import Path
 import threading
 
 from .data_loader import load_all_data
 from .engine import score_all
 from .models import SimulationParams, CustomerScore, DashboardStats
+
+FRONTEND_DIST = Path(__file__).parent.parent.parent / "frontend" / "dist"
 
 # Global state
 _data: dict = {}
@@ -175,3 +180,12 @@ def simulate_stats(params: SimulationParams):
 @app.get("/api/health")
 def health():
     return {"status": "ok", "customers": len(_default_scores)}
+
+
+# Serve built React frontend — must come AFTER all /api routes
+if FRONTEND_DIST.exists():
+    app.mount("/assets", StaticFiles(directory=str(FRONTEND_DIST / "assets")), name="assets")
+
+    @app.get("/{full_path:path}", include_in_schema=False)
+    def serve_spa(full_path: str):
+        return FileResponse(str(FRONTEND_DIST / "index.html"))
