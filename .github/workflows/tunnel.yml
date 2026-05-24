@@ -1,0 +1,85 @@
+name: Run App with Public Tunnel
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [claude/upbeat-bardeen-oWH6s]
+    paths: ['.github/workflows/tunnel.yml']
+
+jobs:
+  serve:
+    runs-on: ubuntu-latest
+    timeout-minutes: 360
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Set up Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install Python dependencies
+        run: pip install -r backend/requirements.txt
+
+      - name: Build frontend
+        run: |
+          cd frontend
+          npm ci
+          npm run build
+
+      - name: Start backend server
+        run: |
+          cd backend
+          nohup uvicorn app.main:app --host 0.0.0.0 --port 8000 > /tmp/backend.log 2>&1 &
+          echo "Waiting for backend..."
+          for i in $(seq 1 30); do
+            if curl -sf http://localhost:8000/api/health > /dev/null 2>&1; then
+              echo "Backend is up!"
+              break
+            fi
+            sleep 2
+          done
+          curl -s http://localhost:8000/api/health
+
+      - name: Start Cloudflare tunnel and publish URL
+        run: |
+          curl -sL https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64 \
+            -o cloudflared && chmod +x cloudflared
+
+          ./cloudflared tunnel --url http://localhost:8000 --no-autoupdate > /tmp/tunnel.log 2>&1 &
+
+          echo "Waiting for tunnel URL..."
+          for i in $(seq 1 40); do
+            URL=$(grep -oP 'https://[a-z0-9-]+\.trycloudflare\.com' /tmp/tunnel.log 2>/dev/null | head -1)
+            if [ -n "$URL" ]; then break; fi
+            sleep 2
+          done
+
+          if [ -z "$URL" ]; then
+            echo "ERROR: Could not get tunnel URL"
+            cat /tmp/tunnel.log
+            exit 1
+          fi
+
+          echo ""
+          echo "============================================"
+          echo "  PUBLIC URL: $URL"
+          echo "============================================"
+          echo ""
+
+          echo "## 🌐 AC Warranty Scoring — Live!" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### **[$URL]($URL)**" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "App will stay live until this workflow times out (up to 6 hours)." >> $GITHUB_STEP_SUMMARY
+
+          echo "::notice title=Public URL::$URL"
+
+          # Keep alive
+          sleep 21600
