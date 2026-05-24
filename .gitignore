@@ -14,3 +14,7 @@ frontend/.vite/
 # OS
 .DS_Store
 *.swp
+
+# Root-level package files (tunnel install artifacts)
+/package.json
+/package-lock.json
